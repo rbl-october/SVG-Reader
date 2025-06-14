@@ -1,0 +1,34 @@
+﻿# Compiled Object files
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories
+build/
+cmake-build-debug/
+cmake-build-release/
+x64/
+Debug/
+Release/
+.vs/
+
+# IDE specific files
+.vscode/
+.idea/
+*.sln
+*.vcxproj*
+*.filters
+*.user
+ipch/
+*.VC.db
+*.suo
+
+# Log files
+*.log
+
+# Temporary files
+*~
