@@ -1,0 +1,2 @@
+1. Đường dẫn tải thư viện SFML: https://github.com/SFML/SFML
+2. Đường dẫn tải thư viện PugiXML: https://pugixml.org/
