@@ -5,11 +5,11 @@ Point2D::Point2D(float x, float y) : x(x), y(y) {}
 
 SVGElements::~SVGElements() {}
 
-void SVGElements::setFillColour(unsigned int colour) {
+void SVGElements::setFillColour(unsigned long colour) {
     fillColour = colour;
 }
 
-void SVGElements::setStrokeColour(unsigned int colour) {
+void SVGElements::setStrokeColour(unsigned long colour) {
     strokeColour = colour;
 }
 
