@@ -13,7 +13,7 @@ struct Point2D {
 
 class SVGElements {
 protected:
-    unsigned int fillColour, strokeColour;
+    unsigned long fillColour, strokeColour;
     float fillOpacity, strokeOpacity;
     float strokeWidth;
 
@@ -21,8 +21,8 @@ public:
     virtual ~SVGElements();
     virtual void render(IRenderer* renderer) = 0;
 
-    void setFillColour(unsigned int colour);
-    void setStrokeColour(unsigned int colour);
+    void setFillColour(unsigned long colour);
+    void setStrokeColour(unsigned long colour);
     void setStrokeWidth(float width);
 };
 
