@@ -1,4 +1,5 @@
-#include "elements.h"
+﻿#include "elements.h"
+#include "..\renderer\IRenderer.h"
 #include <iostream>
 
 Point2D::Point2D(float x, float y) : x(x), y(y) {}
@@ -30,7 +31,13 @@ void SVGEllipse::setRadii(float rX, float rY) {
 }
 
 void SVGEllipse::render(IRenderer* renderer) {
-    std::cout << "Render Ellipse\n";
+    int r, g, b, a;
+    getRGBAFromULong(fillColour, r, g, b, a);
+    renderer->setFillColor(r, g, b, a);
+    getRGBAFromULong(strokeColour, r, g, b, a);
+    renderer->setStrokeColor(r, g, b, a);
+    renderer->setStrokeWidth(strokeWidth);
+    renderer->drawEllipse(centre.x, centre.y, radiusX, radiusY);
 }
 
 SVGCircle::SVGCircle(const Point2D& c, float r)
@@ -46,7 +53,13 @@ void SVGCircle::setRadius(float r) {
 }
 
 void SVGCircle::render(IRenderer* renderer) {
-    std::cout << "Render Circle\n";
+    int r, g, b, a;
+    getRGBAFromULong(fillColour, r, g, b, a);
+    renderer->setFillColor(r, g, b, a);
+    getRGBAFromULong(strokeColour, r, g, b, a);
+    renderer->setStrokeColor(r, g, b, a);
+    renderer->setStrokeWidth(strokeWidth);
+    renderer->drawCircle(centre.x, centre.y, radius);
 }
 
 SVGRectangle::SVGRectangle(const Point2D& tl, float len, float wid)
@@ -62,7 +75,14 @@ void SVGRectangle::setWidthLength(float len, float wid) {
 }
 
 void SVGRectangle::render(IRenderer* renderer) {
-    std::cout << "Render Rectangle\n";
+    int r, g, b, a;
+
+    getRGBAFromULong(fillColour, r, g, b, a);
+    renderer->setFillColor(r, g, b, a);
+    getRGBAFromULong(strokeColour, r, g, b, a);
+    renderer->setStrokeColor(r, g, b, a);
+    renderer->setStrokeWidth(strokeWidth);
+    renderer->drawRectangle(topLeft.x, topLeft.y, length, width);
 }
 
 SVGLine::SVGLine(const Point2D& p1, const Point2D& p2)
@@ -74,21 +94,37 @@ void SVGLine::setLine(const Point2D& p1, const Point2D& p2) {
 }
 
 void SVGLine::render(IRenderer* renderer) {
-    std::cout << "Render Line\n";
+    int r, g, b, a;
+    getRGBAFromULong(fillColour, r, g, b, a);
+    renderer->setFillColor(r, g, b, a);
+    getRGBAFromULong(strokeColour, r, g, b, a);
+    renderer->setStrokeColor(r, g, b, a);
+    renderer->setStrokeWidth(strokeWidth);
+    renderer->drawLine(pointStart, pointEnd);
 }
 
 SVGPolyline::SVGPolyline(const std::vector<Point2D>& pts)
     : ptsList(pts) {}
 
 void SVGPolyline::render(IRenderer* renderer) {
-    std::cout << "Render Polyline\n";
+    int r, g, b, a;
+    getRGBAFromULong(fillColour, r, g, b, a);
+    renderer->setFillColor(r, g, b, a);
+    getRGBAFromULong(strokeColour, r, g, b, a);
+    renderer->setStrokeColor(r, g, b, a);
+    renderer->drawPolyline(ptsList);
 }
 
 SVGPolygon::SVGPolygon(const std::vector<Point2D>& pts)
     : ptsList(pts) {}
 
 void SVGPolygon::render(IRenderer* renderer) {
-    std::cout << "Render Polygon\n";
+    int r, g, b, a;
+    getRGBAFromULong(fillColour, r, g, b, a);
+    renderer->setFillColor(r, g, b, a);
+    getRGBAFromULong(strokeColour, r, g, b, a);
+    renderer->setStrokeColor(r, g, b, a);
+    renderer->drawPolygon(ptsList);
 }
 
 SVGText::SVGText(const Point2D& coord, const std::string& txt, int fs, const std::string& tf)
@@ -107,6 +143,16 @@ void SVGText::setTypeface(const std::string& tf) {
 }
 
 void SVGText::render(IRenderer* renderer) {
-    std::cout << "Render Text: " << text << "\n";
+    int r, g, b, a;
+    getRGBAFromULong(fillColour, r, g, b, a);
+    renderer->setFillColor(r, g, b, a);
+    renderer->drawText(coordinates.x, coordinates.y, text, fontSize, typeface);
 }
 
+void getRGBAFromULong(unsigned long colour, int& r, int& g, int& b, int& a)
+{
+    r = (colour >> 24) & 0xFF;
+    g = (colour >> 16) & 0xFF;
+    b = (colour >> 8) & 0xFF;
+    a = colour & 0xFF;
+}
