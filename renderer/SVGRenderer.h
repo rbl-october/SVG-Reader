@@ -1,9 +1,10 @@
-﻿// include/SFMLRenderer.h
+﻿// include/SVGRenderer.h
 #pragma once
 #include "IRenderer.h"
-#include <SFML/Graphics.hpp>
+#include <sstream>
+#include <iomanip>
 
-class SFMLRenderer : public IRenderer
+class SVGRenderer : public IRenderer
 {
 public:
     void initialize(int width, int height) override;
@@ -24,11 +25,10 @@ public:
     void setStrokeWidth(float width) override;
 
 private:
-    sf::RenderTexture renderTexture;
-    sf::Color fillColor;
-    sf::Color strokeColor;
-    sf::Font font;
+    std::stringstream svgContent;
+    std::string fillColor;
+    std::string strokeColor;
     float strokeWidth;
 
-    void drawEllipseShape(float centerX, float centerY, float radiusX, float radiusY);
+    std::string rgbtoHex(int r, int g, int b, int a = 255);
 };
