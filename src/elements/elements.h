@@ -3,6 +3,13 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include "Transform.h"
+
+using std::string;
+using std::vector;
+using std::unique_ptr;
+
 
 class IRenderer;
 
@@ -25,6 +32,10 @@ public:
     void setFillColour(unsigned long colour);
     void setStrokeColour(unsigned long colour);
     void setStrokeWidth(float width);
+    void setTransform(const string& transformStr);
+
+protected:
+    string transformStr;
 };
 
 class SVGEllipse : public SVGElements {
@@ -91,12 +102,42 @@ public:
     std::string text;
     int fontSize;
     std::string typeface;
+    std::string fontFilePath;
 
-    SVGText(const Point2D& coordinates, const std::string& text, int fontSize, const std::string& typeface);
+    SVGText(const Point2D& coordinates, const std::string& text, int fontSize, const std::string& typeface, const std::string& fontFilePath);
     void setText(const std::string& txt);
     void setFS(int size);
     void setTypeface(const std::string& typeface);
     void render(IRenderer* renderer) override;
 };
 
+class SVGGroup : public SVGElements {
+public:
+    void addChild(unique_ptr<SVGElements> child);
+    void render(IRenderer* renderer) override;
+
+private:
+    vector<unique_ptr<SVGElements>>children;
+};
+
+enum class PathCommandType { MoveTo, LineTo, CubicBezier, QuadraticBezier, HorizontalLineTo, VerticalLineTo, ClosePath };
+
+struct PathCommand {
+    PathCommandType type;
+    bool relative;
+    std::vector<Point2D> points;
+};
+
+std::vector<PathCommand> parsePathData(const std::string& dStr);
+
+
+class SVGPath: public SVGElements {
+public:
+    std::string d;
+    std::vector<PathCommand> segments;
+
+    SVGPath(const std::string& d);
+    void setPathData(const std::string& d);
+    void render(IRenderer* renderer) override;
+};
 #endif // ELEMENTS_H

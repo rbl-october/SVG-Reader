@@ -18,6 +18,11 @@ void SVGElements::setStrokeWidth(float width) {
     strokeWidth = width;
 }
 
+void SVGElements::setTransform(const string& t)
+{
+    transformStr = t;
+}
+
 SVGEllipse::SVGEllipse(const Point2D& c, float rx, float ry)
     : centre(c), radiusX(rx), radiusY(ry) {}
 
@@ -127,8 +132,8 @@ void SVGPolygon::render(IRenderer* renderer) {
     renderer->drawPolygon(ptsList);
 }
 
-SVGText::SVGText(const Point2D& coord, const std::string& txt, int fs, const std::string& tf)
-    : coordinates(coord), text(txt), fontSize(fs), typeface(tf) {}
+SVGText::SVGText(const Point2D& coord, const std::string& txt, int fs, const std::string& tf, const std::string&ffp)
+    : coordinates(coord), text(txt), fontSize(fs), typeface(tf), fontFilePath(ffp) {}
 
 void SVGText::setText(const std::string& txt) {
     text = txt;
@@ -146,7 +151,7 @@ void SVGText::render(IRenderer* renderer) {
     int r, g, b, a;
     getRGBAFromULong(fillColour, r, g, b, a);
     renderer->setFillColor(r, g, b, a);
-    renderer->drawText(coordinates.x, coordinates.y, text, fontSize, typeface);
+    renderer->drawText(coordinates.x, coordinates.y, text, fontSize, typeface, fontFilePath);
 }
 
 void getRGBAFromULong(unsigned long colour, int& r, int& g, int& b, int& a)
@@ -155,4 +160,75 @@ void getRGBAFromULong(unsigned long colour, int& r, int& g, int& b, int& a)
     g = (colour >> 16) & 0xFF;
     b = (colour >> 8) & 0xFF;
     a = colour & 0xFF;
+}
+
+std::vector<PathCommand> parsePathData(const std::string& dStr) {
+    std::vector<PathCommand> segments;
+    std::stringstream ss(dStr);
+    char cmd;
+    float x, y;
+    bool relative;
+
+    while (ss >> cmd) {
+        relative = islower(cmd);
+        PathCommandType type;
+
+        switch (tolower(cmd)) {
+        case 'm': type = PathCommandType::MoveTo; break;
+        case 'l': type = PathCommandType::LineTo; break;
+        case 'h': type = PathCommandType::HorizontalLineTo; break;
+        case 'v': type = PathCommandType::VerticalLineTo; break;
+        case 'c': type = PathCommandType::CubicBezier; break;
+        case 'q': type = PathCommandType::QuadraticBezier; break;
+        case 'z': case 'Z':
+            segments.push_back({ PathCommandType::ClosePath, false, {} });
+            continue;
+        default:
+            std::cerr << "Unsupported path command: " << cmd << "\n";
+            continue;
+        }
+
+        PathCommand segment{ type, relative, {} };
+        int ptsNeeded = (type == PathCommandType::CubicBezier) ? 3 :
+            (type == PathCommandType::QuadraticBezier) ? 2 : 1;
+
+        for (int i = 0; i < ptsNeeded; ++i) {
+            ss >> x >> y;
+            segment.points.push_back({ x, y });
+        }
+
+        segments.push_back(segment);
+    }
+
+    return segments;
+}
+
+SVGPath::SVGPath(const std::string& dStr) : d(dStr) {
+    segments = parsePathData(dStr);
+}
+
+void SVGPath::setPathData(const std::string& dStr) {
+    d = dStr;
+    segments = parsePathData(dStr);
+}
+
+void SVGPath::render(IRenderer* renderer) {
+    renderer->drawPath(segments, fillColour, strokeColour, fillOpacity, strokeOpacity, strokeWidth);
+}
+
+
+void SVGGroup::addChild(unique_ptr<SVGElements> child)
+{
+    children.push_back(move(child));
+}
+
+void SVGGroup::render(IRenderer* renderer)
+{
+    renderer->beginGroup();
+    if (!transformStr.empty()) renderer->pushTransform(transformStr);
+    for (auto& child : children) {
+        child->render(renderer);
+    }
+    if (!transformStr.empty()) renderer->popTransform();
+    renderer->endGroup();
 }
