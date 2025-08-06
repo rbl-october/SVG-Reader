@@ -6,16 +6,24 @@ Point2D::Point2D(float x, float y) : x(x), y(y) {}
 
 SVGElements::~SVGElements() {}
 
-void SVGElements::setFillColour(unsigned long colour) {
+void SVGElements::setDefaultFillColour(unsigned long colour) {
     fillColour = colour;
 }
 
-void SVGElements::setStrokeColour(unsigned long colour) {
+void SVGElements::setDefaultStrokeColour(unsigned long colour) {
     strokeColour = colour;
 }
 
-void SVGElements::setStrokeWidth(float width) {
+void SVGElements::setDefaultStrokeWidth(float width) {
     strokeWidth = width;
+}
+
+void SVGElements::setDefaultFillOpacity(float opacity) {
+    fillOpacity = opacity;
+}
+
+void SVGElements::setDefaultStrokeOpacity(float opacity) {
+    strokeOpacity = opacity;
 }
 
 void SVGElements::setTransform(const string& t)
@@ -154,13 +162,6 @@ void SVGText::render(IRenderer* renderer) {
     renderer->drawText(coordinates.x, coordinates.y, text, fontSize, typeface, fontFilePath);
 }
 
-void getRGBAFromULong(unsigned long colour, int& r, int& g, int& b, int& a)
-{
-    r = (colour >> 24) & 0xFF;
-    g = (colour >> 16) & 0xFF;
-    b = (colour >> 8) & 0xFF;
-    a = colour & 0xFF;
-}
 
 std::vector<PathCommand> parsePathData(const std::string& dStr) {
     std::vector<PathCommand> segments;
@@ -213,6 +214,7 @@ void SVGPath::setPathData(const std::string& dStr) {
 }
 
 void SVGPath::render(IRenderer* renderer) {
+    std::cout << "SVGPath fill: " << fillColour << ", stroke: " << strokeColour << std::endl;
     renderer->drawPath(segments, fillColour, strokeColour, fillOpacity, strokeOpacity, strokeWidth);
 }
 

@@ -15,6 +15,9 @@ class IRenderer;
 
 void getRGBAFromULong(unsigned long colour, int& r, int& g, int& b, int& a);
 
+std::string rgbaToSVGColour(unsigned long colour);
+
+
 struct Point2D {
     float x, y;
     Point2D(float x = 0, float y = 0);
@@ -22,16 +25,18 @@ struct Point2D {
 
 class SVGElements {
 public:
-    unsigned long fillColour, strokeColour;
-    float fillOpacity, strokeOpacity;
-    float strokeWidth;
+    unsigned long fillColour = 0x000000ff, strokeColour = 0x000000ff;
+    float fillOpacity = 1.0f, strokeOpacity = 1.0f;
+    float strokeWidth = 1.0f;
 
     virtual ~SVGElements();
     virtual void render(IRenderer* renderer) = 0;
 
-    void setFillColour(unsigned long colour);
-    void setStrokeColour(unsigned long colour);
-    void setStrokeWidth(float width);
+    void setDefaultFillColour(unsigned long colour);
+    void setDefaultStrokeColour(unsigned long colour);
+    void setDefaultStrokeWidth(float width);
+    void setDefaultFillOpacity(float opacity);
+    void setDefaultStrokeOpacity(float opacity);
     void setTransform(const string& transformStr);
 
 protected:
