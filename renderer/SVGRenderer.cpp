@@ -101,13 +101,45 @@ void SVGRenderer::drawPolygon(const std::vector<Point2D>& points)
         << R"(" stroke-width=")" << strokeWidth << R"("/>)" << "\n";
 }
 
-void SVGRenderer::drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface)
+void SVGRenderer::drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface, const std::string& fontFilePath)
 {
     svgContent << R"(  <text x=")" << x << R"(" y=")" << y
         << R"(" font-family=")" << typeface << R"(" font-size=")" << fontSize
         << R"(" fill=")" << fillColor << R"(" stroke=")" << strokeColor
         << R"(" stroke-width=")" << strokeWidth << R"(">)";
     svgContent << textContent << R"(</text>)" << "\n";
+}
+
+void SVGRenderer::drawPath(const std::vector<PathCommand>& segments, unsigned long fillColour, unsigned long strokeColour, float fillOpacity, float strokeOpacity, float strokeWidth)
+{
+    svgContent << R"(  <path d=")";
+    for (const auto& cmd : segments) {
+        char letter;
+        switch (cmd.type) {
+        case PathCommandType::MoveTo: letter = cmd.relative ? 'm' : 'M'; break;
+        case PathCommandType::LineTo: letter = cmd.relative ? 'l' : 'L'; break;
+        case PathCommandType::CubicBezier: letter = cmd.relative ? 'c' : 'C'; break;
+        case PathCommandType::QuadraticBezier: letter = cmd.relative ? 'q' : 'Q'; break;
+        case PathCommandType::HorizontalLineTo: letter = cmd.relative ? 'h' : 'H'; break;
+        case PathCommandType::VerticalLineTo: letter = cmd.relative ? 'v' : 'V'; break;
+        case PathCommandType::ClosePath: letter = 'Z'; break;
+        }
+
+        svgContent << letter;
+
+        for (const auto& pt : cmd.points) {
+            svgContent << ' ' << pt.x << ',' << pt.y;
+        }
+
+        svgContent << ' ';
+    }
+
+    svgContent << R"(" fill=")" << fillColour
+        << R"(" stroke=")" << strokeColour
+        << R"(" fill-opacity=")" << fillOpacity
+        << R"(" stroke-opacity=")" << strokeOpacity
+        << R"(" stroke-width=")" << strokeWidth
+        << R"(" />)" << "\n";
 }
 
 void SVGRenderer::setFillColor(int r, int g, int b, int a) // Updated signature
@@ -125,6 +157,12 @@ void SVGRenderer::setStrokeWidth(float width)
     strokeWidth = width;
 }
 
+void SVGRenderer::drawPath(const std::string& dStr)
+{
+    SVGPath path(dStr);
+    path.render(this);
+}
+
 std::string SVGRenderer::rgbtoHex(int r, int g, int b, int a)
 {
     std::stringstream ss;
@@ -138,4 +176,30 @@ std::string SVGRenderer::rgbtoHex(int r, int g, int b, int a)
         ss << std::setw(2) << a;
     }
     return ss.str();
+}
+
+std::stack<bool> groupOpenStack;
+
+void SVGRenderer::pushTransform(const string& transformStr) {
+    svgContent << R"(  <g transform=")" << '"' << transformStr << '"' << R"(>")" << "\n";
+    groupOpenStack.push(true);
+}
+
+void SVGRenderer::popTransform() {
+    if (!groupOpenStack.empty() && groupOpenStack.top()) {
+        svgContent << R"(  </g>)" << "\n";
+        groupOpenStack.pop();
+    }
+}
+
+void SVGRenderer::beginGroup() {
+    groupOpenStack.push(false); // nhóm không có transform
+    svgContent << R"(  <g>)" << "\n";
+}
+
+void SVGRenderer::endGroup() {
+    if (!groupOpenStack.empty()) {
+        svgContent << R"(  </g>)" << "\n";
+        groupOpenStack.pop();
+    }
 }

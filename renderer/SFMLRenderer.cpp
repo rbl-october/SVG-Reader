@@ -2,9 +2,22 @@
 #include "SFMLRenderer.h"
 #include <cmath>
 #include <math.h>
+#include <stack>
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <filesystem>
+#include <set>
+#include <map>
+#include <SFML/Graphics.hpp>
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+std::stack<sf::Transform> sfmlTransformStack{ {sf::Transform()} }; // identity transform
+
+static std::map<std::string, sf::Font> fontCache;
 
 void SFMLRenderer::initialize(int width, int height) {
     renderTexture.create(width, height);
@@ -117,13 +130,18 @@ void SFMLRenderer::drawPolygon(const std::vector<Point2D>& points)
     renderTexture.draw(polygon);
 }
 
-void SFMLRenderer::drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface)
+void SFMLRenderer::drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface, const std::string& fontFilePath)
 {
-    static sf::Font font;
-    if (!font.loadFromFile("Dense.ttf"))
-    {
-        return;
+    auto& font = fontCache[fontFilePath];
+    static std::set<std::string> loadedFonts;
+
+    if (!loadedFonts.count(fontFilePath)) {
+        if (!font.loadFromFile(fontFilePath)) {
+            return;
+        }
+        loadedFonts.insert(fontFilePath);
     }
+
 
     sf::Text text;
     text.setFont(font);
@@ -136,6 +154,39 @@ void SFMLRenderer::drawText(float x, float y, const std::string& textContent, in
     renderTexture.draw(text);
 }
 
+void SFMLRenderer::drawPath(const std::vector<PathCommand>& segments, unsigned long fillColour, unsigned long strokeColour, float fillOpacity, float strokeOpacity, float strokeWidth)
+{
+    sf::VertexArray path(sf::LineStrip);
+    Point2D current;
+
+    for (const auto& cmd : segments) {
+        switch (cmd.type) {
+        case PathCommandType::MoveTo:
+            current = cmd.points[0];
+            if (path.getVertexCount() > 0) {
+                renderTexture.draw(path, sf::RenderStates(sfmlTransformStack.top()));
+            }
+            path.append(sf::Vertex({ current.x, current.y }));
+            break;
+        case PathCommandType::LineTo:
+            for (const auto& pt : cmd.points) {
+                current = pt;
+                path.append(sf::Vertex({ current.x, current.y }));
+            }
+            break;
+        case PathCommandType::ClosePath:
+            if (path.getVertexCount() > 0)
+                path.append(path[0]);
+            break;
+        default:
+            break;
+        }
+    }
+    if (path.getVertexCount() > 0) {
+        renderTexture.draw(path, sf::RenderStates(sfmlTransformStack.top()));
+    }
+}
+
 void SFMLRenderer::setFillColor(int r, int g, int b, int a) {
     fillColor = sf::Color(r, g, b, a);
 }
@@ -146,6 +197,12 @@ void SFMLRenderer::setStrokeWidth(float width) {
     strokeWidth = width;
 }
 
+void SFMLRenderer::drawPath(const std::string& dStr)
+{
+    SVGPath path(dStr);
+    path.render(this);
+}
+
 void SFMLRenderer::saveToFile(const std::string &filepath) {
     sf::Texture texture = renderTexture.getTexture();
     sf::Image image = texture.copyToImage();
@@ -153,3 +210,20 @@ void SFMLRenderer::saveToFile(const std::string &filepath) {
         throw std::runtime_error("Failed to save image to file: " + filepath);
     }
 }
+
+void SFMLRenderer::pushTransform(const string& transformStr) {
+    Transform parsed = Transform::fromString(transformStr);
+    auto m = parsed.getMatrix();
+    sf::Transform t(m[0], m[1], m[2],
+        m[3], m[4], m[5],
+        m[6], m[7], m[8]);
+    sfmlTransformStack.push(sfmlTransformStack.top() * t);
+}
+
+void SFMLRenderer::popTransform() {
+    if (sfmlTransformStack.size() > 1)
+        sfmlTransformStack.pop();
+}
+
+void SFMLRenderer::beginGroup() {}
+void SFMLRenderer::endGroup() {}

@@ -23,11 +23,21 @@ public:
     virtual void drawLine(const Point2D& p1, const Point2D& p2) = 0;
     virtual void drawPolyline(const std::vector<Point2D>& points) = 0;
     virtual void drawPolygon(const std::vector<Point2D>& points) = 0;
-    virtual void drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface) = 0;
+    virtual void drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface, const std::string& fontFilePath) = 0;
+    virtual void drawPath(const std::vector<PathCommand>& segments, unsigned long fillColour, unsigned long strokeColour, float fillOpacity, float strokeOpacity, float strokeWidth) = 0;
+    virtual void drawPath(const std::string& dStr) = 0;
 
 
     // Property setting methods
     virtual void setFillColor(int r, int g, int b, int a = 255) = 0;
     virtual void setStrokeColor(int r, int g, int b, int a = 255) = 0;
     virtual void setStrokeWidth(float width) = 0;
+
+
+    // New methods for transformations & grouping
+    virtual void pushTransform(const string& transformStr) = 0;
+    virtual void popTransform() = 0;
+
+    virtual void beginGroup() = 0;
+    virtual void endGroup() = 0;
 };

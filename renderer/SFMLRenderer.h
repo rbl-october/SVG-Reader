@@ -17,11 +17,17 @@ public:
     void drawLine(const Point2D& p1, const Point2D& p2) override;
     void drawPolyline(const std::vector<Point2D>& points) override;
     void drawPolygon(const std::vector<Point2D>& points) override;
-    void drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface) override;
-
+    void drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface, const std::string& fontFilePath) override;
+    void drawPath(const std::vector<PathCommand>& segments, unsigned long fillColour, unsigned long strokeColour, float fillOpacity, float strokeOpacity, float strokeWidth) override;
+    void pushTransform(const string& transformStr) override;
+    void popTransform() override;
+    void beginGroup() override;
+    void endGroup() override;
     void setFillColor(int r, int g, int b, int a = 255) override;
     void setStrokeColor(int r, int g, int b, int a = 255) override;
     void setStrokeWidth(float width) override;
+    void drawPath(const std::string& dStr) override;
+
 
 private:
     sf::RenderTexture renderTexture;
