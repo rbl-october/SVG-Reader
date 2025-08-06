@@ -168,10 +168,35 @@ namespace SVGParser
         std::string textContent = xmlNode.text().get(); // Lấy nội dung văn bản bên trong thẻ
         int fontSize = static_cast<int>(m_xmlParser.getAttributeFloat(xmlNode, "font-size", 16.0f)); // Default font size
         std::string typeface = m_xmlParser.getAttributeString(xmlNode, "font-family", "Arial"); // Default font family
+        std::string fontPath = "../Dense.ttf";  // Path to font family
 
-        auto text = std::make_unique<SVGText>(Point2D(x, y), textContent, fontSize, typeface);
+        auto text = std::make_unique<SVGText>(Point2D(x, y), textContent, fontSize, typeface, fontPath);
         parseCommonAttributes(xmlNode, text.get());
         return text;
+    }
+
+    std::unique_ptr<SVGElements> SVGParser::parseGroupAttributes(const xml_node& xmlNode)
+    {
+        auto group = std::make_unique<SVGGroup>();
+
+        // Parse common styles and transform (only those allowed)
+        parseCommonAttributes(xmlNode, group.get());
+        group->setTransform(m_xmlParser.getAttributeString(xmlNode, "transform", ""));
+
+        // Parse children recursively
+        for (auto child : xmlNode.children()) {
+            auto childElem = parseSVGElement(child);
+            if (childElem)
+                group->addChild(std::move(childElem));
+        }
+        return group;
+    }
+
+    std::unique_ptr<SVGElements> SVGParser::parsePathAttributes(const xml_node& xmlNode) {
+        std::string dStr = m_xmlParser.getAttributeString(xmlNode, "d");
+        auto path = std::make_unique<SVGPath>(dStr);
+        parseCommonAttributes(xmlNode, path.get());
+        return path;
     }
 
     std::unique_ptr<SVGElements> SVGParser::parseSVGElement(const xml_node& xmlNode) {
@@ -198,7 +223,9 @@ namespace SVGParser
         else if (nodeName == "text") {
             return parseTextAttributes(xmlNode);
         }
-        // Add more SVG refs if needed
+        else if (nodeName == "g") {
+            return parseGroupAttributes(xmlNode);
+        }
 
         std::cerr << "SVGParser: Warning - Unhandled SVG element: " << nodeName << std::endl;
         return nullptr;

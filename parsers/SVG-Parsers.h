@@ -30,6 +30,9 @@ namespace SVGParser
         std::unique_ptr<SVGElements> parsePolylineAttributes(const pugi::xml_node& xmlNode);
         std::unique_ptr<SVGElements> parsePolygonAttributes(const pugi::xml_node& xmlNode);
         std::unique_ptr<SVGElements> parseTextAttributes(const pugi::xml_node& xmlNode);
+        std::unique_ptr<SVGElements> parseGroupAttributes(const pugi::xml_node& xmlNode);
+        std::unique_ptr<SVGElements> parsePathAttributes(const pugi::xml_node& xmlNode);
+
 
         // To sort dispatches of elements
         std::unique_ptr<SVGElements> parseSVGElement(const pugi::xml_node& xmlNode);
