@@ -1,4 +1,5 @@
 ﻿#include "XML-ParsersWrapper.h"
+#include "ColorUtils.h"
 #include <iostream>
 #include <sstream>
 
@@ -40,7 +41,11 @@ namespace SVGParser
 
     // Directly reads the colour in unsigned long form. Whenever try to read, use "0x" + the RGB-A code in hex form.
     unsigned long XMLParserWrapper::getAttributeColor(const pugi::xml_node& node, const std::string& attrName, unsigned long defaultValue) const {
-        return node.attribute(attrName.c_str()).as_uint(defaultValue);
+        auto attr = node.attribute(attrName.c_str());
+        if (!attr) return defaultValue;
+
+        std::string colorStr = attr.value();
+        return parseColorString(colorStr, defaultValue);
     }
 
     std::vector<pugi::xml_node> XMLParserWrapper::getChildNodes(const pugi::xml_node& node) const {

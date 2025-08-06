@@ -67,8 +67,8 @@ namespace SVGParser
 
     void SVGParser::parseCommonAttributes(const xml_node& xmlNode, SVGElements* svgElement) {
         // Colour & opacity
-        svgElement->setFillColour(m_xmlParser.getAttributeColor(xmlNode, "fill", 0x000000FF)); // Default black
-        svgElement->setStrokeColour(m_xmlParser.getAttributeColor(xmlNode, "stroke", 0x00000000)); // Default transparent (no stroke)
+        svgElement->setDefaultFillColour(m_xmlParser.getAttributeColor(xmlNode, "fill", 0x000000FF)); // Default black
+        svgElement->setDefaultStrokeColour(m_xmlParser.getAttributeColor(xmlNode, "stroke", 0x00000000)); // Default transparent (no stroke)
 
         // Opacity is an attribute
         // SVG Spec: fill-opacity and stroke-opacity is a float, ranging from 0-1
@@ -76,7 +76,7 @@ namespace SVGParser
         svgElement->strokeOpacity = m_xmlParser.getAttributeFloat(xmlNode, "stroke-opacity", 1.0f);
 
         // Width of stroke
-        svgElement->setStrokeWidth(m_xmlParser.getAttributeFloat(xmlNode, "stroke-width", 0.0f));
+        svgElement->setDefaultStrokeWidth(m_xmlParser.getAttributeFloat(xmlNode, "stroke-width", 0.0f));
     }
 
     std::vector<Point2D> SVGParser::parsePointsString(const std::string& pointsString) {
