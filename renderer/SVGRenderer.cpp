@@ -1,5 +1,6 @@
 ﻿// src/SVGRenderer.cpp
 #include "SVGRenderer.h"
+#include "ColorUtils.h"
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -113,20 +114,23 @@ void SVGRenderer::drawText(float x, float y, const std::string& textContent, int
 void SVGRenderer::drawPath(const std::vector<PathCommand>& segments, unsigned long fillColour, unsigned long strokeColour, float fillOpacity, float strokeOpacity, float strokeWidth)
 {
     svgContent << R"(  <path d=")";
+
     for (const auto& cmd : segments) {
         char letter;
         switch (cmd.type) {
-        case PathCommandType::MoveTo: letter = cmd.relative ? 'm' : 'M'; break;
-        case PathCommandType::LineTo: letter = cmd.relative ? 'l' : 'L'; break;
-        case PathCommandType::CubicBezier: letter = cmd.relative ? 'c' : 'C'; break;
-        case PathCommandType::QuadraticBezier: letter = cmd.relative ? 'q' : 'Q'; break;
+        case PathCommandType::MoveTo:           letter = cmd.relative ? 'm' : 'M'; break;
+        case PathCommandType::LineTo:           letter = cmd.relative ? 'l' : 'L'; break;
+        case PathCommandType::CubicBezier:      letter = cmd.relative ? 'c' : 'C'; break;
+        case PathCommandType::QuadraticBezier:  letter = cmd.relative ? 'q' : 'Q'; break;
         case PathCommandType::HorizontalLineTo: letter = cmd.relative ? 'h' : 'H'; break;
-        case PathCommandType::VerticalLineTo: letter = cmd.relative ? 'v' : 'V'; break;
-        case PathCommandType::ClosePath: letter = 'Z'; break;
+        case PathCommandType::VerticalLineTo:   letter = cmd.relative ? 'v' : 'V'; break;
+        case PathCommandType::ClosePath:        letter = 'Z'; break;
+        default:                                letter = '?'; break;
         }
 
         svgContent << letter;
 
+        // Only print coordinates if the command has any points
         for (const auto& pt : cmd.points) {
             svgContent << ' ' << pt.x << ',' << pt.y;
         }
@@ -134,21 +138,26 @@ void SVGRenderer::drawPath(const std::vector<PathCommand>& segments, unsigned lo
         svgContent << ' ';
     }
 
-    svgContent << R"(" fill=")" << fillColour
-        << R"(" stroke=")" << strokeColour
+    svgContent << R"(" fill=")" << rgbaToSVGColour(fillColour)
+        << R"(" stroke=")" << rgbaToSVGColour(strokeColour)
         << R"(" fill-opacity=")" << fillOpacity
         << R"(" stroke-opacity=")" << strokeOpacity
         << R"(" stroke-width=")" << strokeWidth
         << R"(" />)" << "\n";
+
+    std::cout << "SVGRenderer path fill = " << rgbaToSVGColour(fillColour)
+        << ", stroke = " << rgbaToSVGColour(strokeColour) << std::endl;
 }
 
 void SVGRenderer::setFillColor(int r, int g, int b, int a) // Updated signature
 {
+    currentfillColor = (r << 24) | (g << 16) | (b << 8) | a;
     fillColor = rgbtoHex(r, g, b, a);
 }
 
 void SVGRenderer::setStrokeColor(int r, int g, int b, int a)
 {
+    currentStrokeColor = (r << 24) | (g << 16) | (b << 8) | a;
     strokeColor = rgbtoHex(r, g, b, a);
 }
 
@@ -157,26 +166,30 @@ void SVGRenderer::setStrokeWidth(float width)
     strokeWidth = width;
 }
 
+void SVGRenderer::setFillOpacity(float opacity)
+{
+    currentFillOpacity = opacity;
+}
+
+void SVGRenderer::setStrokeOpacity(float opacity)
+{
+    currentStrokeOpacity = opacity;
+}
+
 void SVGRenderer::drawPath(const std::string& dStr)
 {
     SVGPath path(dStr);
+    path.setDefaultFillColour(currentfillColor);
+    path.setDefaultStrokeColour(currentStrokeColor);
+    path.setDefaultStrokeWidth(strokeWidth);
+    path.setDefaultFillOpacity(currentFillOpacity);
+    path.setDefaultStrokeOpacity(currentStrokeOpacity);
     path.render(this);
+
+
 }
 
-std::string SVGRenderer::rgbtoHex(int r, int g, int b, int a)
-{
-    std::stringstream ss;
-    ss << "#" << std::hex << std::setfill('0')
-        << std::setw(2) << r
-        << std::setw(2) << g
-        << std::setw(2) << b;
-    // Only append alpha if it's not fully opaque
-    if (a < 255)
-    {
-        ss << std::setw(2) << a;
-    }
-    return ss.str();
-}
+
 
 std::stack<bool> groupOpenStack;
 

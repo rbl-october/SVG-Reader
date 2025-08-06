@@ -1,6 +1,7 @@
 ﻿// include/SVGRenderer.h
 #pragma once
 #include "IRenderer.h"
+#include "ColorUtils.h"
 #include <sstream>
 #include <iomanip>
 
@@ -27,6 +28,8 @@ public:
     void setFillColor(int r, int g, int b, int a = 255) override;
     void setStrokeColor(int r, int g, int b, int a = 255) override;
     void setStrokeWidth(float width) override;
+    void setFillOpacity(float opacity);
+    void setStrokeOpacity(float opacity);
     void drawPath(const std::string& dStr) override;
 
 private:
@@ -34,6 +37,8 @@ private:
     std::string fillColor;
     std::string strokeColor;
     float strokeWidth;
-
-    std::string rgbtoHex(int r, int g, int b, int a = 255);
+    float currentFillOpacity = 1.0f;
+    float currentStrokeOpacity = 1.0f;
+    unsigned long currentfillColor = 0x000000ff;
+    unsigned long currentStrokeColor = 0x000000ff;
 };
