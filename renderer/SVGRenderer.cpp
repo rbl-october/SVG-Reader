@@ -7,10 +7,14 @@
 
 void SVGRenderer::initialize(int width, int height)
 {
-    svgContent.str(""); // Clear any existing content
+    svgContent.str("");
+    svgContent.clear();
+    defsEmitted = false;
+
     svgContent << R"(<?xml version="1.0" encoding="UTF-8" standalone="no"?>)" << "\n"
-               << R"(<svg width=")" << width << R"(" height=")" << height
-               << R"(" xmlns="http://www.w3.org/2000/svg">)" << "\n";
+        << R"(<svg width=")" << width
+        << R"(" height=")" << height
+        << R"(" xmlns="http://www.w3.org/2000/svg">)" << "\n";
 }
 
 void SVGRenderer::saveToFile(const std::string &filepath)
@@ -26,6 +30,7 @@ void SVGRenderer::saveToFile(const std::string &filepath)
 
 void SVGRenderer::drawCircle(float x, float y, float radius)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <circle cx=")" << x << R"(" cy=")" << y
                << R"(" r=")" << radius
                << R"(" fill=")" << fillColor << R"(" stroke=")" << strokeColor
@@ -34,6 +39,7 @@ void SVGRenderer::drawCircle(float x, float y, float radius)
 
 void SVGRenderer::drawSquare(float x, float y, float size)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <rect x=")" << x << R"(" y=")" << y
                << R"(" width=")" << size << R"(" height=")" << size
                << R"(" fill=")" << fillColor << R"(" stroke=")" << strokeColor
@@ -42,6 +48,7 @@ void SVGRenderer::drawSquare(float x, float y, float size)
 
 void SVGRenderer::drawRectangle(float x, float y, float width, float height)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <rect x=")" << x << R"(" y=")" << y
         << R"(" width=")" << width << R"(" height=")" << height
         << R"(" fill=")" << fillColor << R"(" stroke=")" << strokeColor
@@ -50,6 +57,7 @@ void SVGRenderer::drawRectangle(float x, float y, float width, float height)
 
 void SVGRenderer::drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <polygon points=")"
                << x1 << "," << y1 << " "
                << x2 << "," << y2 << " "
@@ -60,6 +68,7 @@ void SVGRenderer::drawTriangle(float x1, float y1, float x2, float y2, float x3,
 
 void SVGRenderer::drawEllipse(float centerX, float centerY, float radiusX, float radiusY)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <ellipse cx=")" << centerX << R"(" cy=")" << centerY
                << R"(" rx=")" << radiusX << R"(" ry=")" << radiusY
                << R"(" fill=")" << fillColor << R"(" stroke=")" << strokeColor
@@ -70,6 +79,7 @@ void SVGRenderer::drawEllipse(float centerX, float centerY, float radiusX, float
 
 void SVGRenderer::drawLine(const Point2D& p1, const Point2D& p2)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <line x1=")" << p1.x << R"(" y1=")" << p1.y
         << R"(" x2=")" << p2.x << R"(" y2=")" << p2.y
         << R"(" stroke=")" << strokeColor
@@ -78,6 +88,7 @@ void SVGRenderer::drawLine(const Point2D& p1, const Point2D& p2)
 
 void SVGRenderer::drawPolyline(const std::vector<Point2D>& points)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <polyline points=")";
     for (size_t i = 0; i < points.size(); ++i) {
         svgContent << points[i].x << "," << points[i].y;
@@ -91,6 +102,7 @@ void SVGRenderer::drawPolyline(const std::vector<Point2D>& points)
 
 void SVGRenderer::drawPolygon(const std::vector<Point2D>& points)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <polygon points=")";
     for (size_t i = 0; i < points.size(); ++i) {
         svgContent << points[i].x << "," << points[i].y;
@@ -104,6 +116,7 @@ void SVGRenderer::drawPolygon(const std::vector<Point2D>& points)
 
 void SVGRenderer::drawText(float x, float y, const std::string& textContent, int fontSize, const std::string& typeface, const std::string& fontFilePath)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <text x=")" << x << R"(" y=")" << y
         << R"(" font-family=")" << typeface << R"(" font-size=")" << fontSize
         << R"(" fill=")" << fillColor << R"(" stroke=")" << strokeColor
@@ -113,6 +126,7 @@ void SVGRenderer::drawText(float x, float y, const std::string& textContent, int
 
 void SVGRenderer::drawPath(const std::vector<PathCommand>& segments, unsigned long fillColour, unsigned long strokeColour, float fillOpacity, float strokeOpacity, float strokeWidth)
 {
+    emitDefsIfNeeded();
     svgContent << R"(  <path d=")";
 
     for (const auto& cmd : segments) {
@@ -178,6 +192,7 @@ void SVGRenderer::setStrokeOpacity(float opacity)
 
 void SVGRenderer::drawPath(const std::string& dStr)
 {
+    emitDefsIfNeeded();
     SVGPath path(dStr);
     path.setDefaultFillColour(currentfillColor);
     path.setDefaultStrokeColour(currentStrokeColor);
@@ -189,6 +204,58 @@ void SVGRenderer::drawPath(const std::string& dStr)
 
 }
 
+void SVGRenderer::drawLinearGradient(const string& id, const Point2D& P1, const Point2D& P2, const vector<pair<float, string>>& stops)
+{
+    defsContent << "  <linearGradient id=\"" << id << "\" "
+        << "x1=\"" << P1.x << "%\" y1=\"" << P1.y << "%\" "
+        << "x2=\"" << P2.x << "%\" y2=\"" << P2.y << "%\">\n";
+    for (auto& stop : stops) {
+        defsContent << "    <stop offset=\"" << stop.first * 100.0f << "%\" "
+            << "stop-color=\"" << stop.second << "\" />\n";
+    }
+    defsContent << "  </linearGradient>\n";
+}
+
+void SVGRenderer::drawRadialGradient(const string& id, const Point2D& centre, float r, const vector<pair<float, string>>& stops)
+{
+    defsContent << "  <radialGradient id=\"" << id << "\" "
+        << "cx=\"" << centre.x << "%\" cy=\"" << centre.y << "%\" r=\"" << r << "%\">\n";
+    for (auto& stop : stops) {
+        defsContent << "    <stop offset=\"" << stop.first * 100 << "%\" "
+            << "stop-color=\"" << stop.second << "\" />\n";
+    }
+    defsContent << "  </radialGradient>\n";
+}
+
+void SVGRenderer::setFillGradient(const string& gradientId)
+{
+    setFillColor(std::string("url(#") + gradientId + ")");
+}
+
+void SVGRenderer::setStrokeGradient(const string& gradientId)
+{
+    setStrokeColor(std::string("url(#") + gradientId + ")");
+}
+
+void SVGRenderer::setFillColor(const std::string& css)
+{
+    currentfillColor = 0;
+    fillColor = css;
+}
+
+void SVGRenderer::setStrokeColor(const std::string& css)
+{
+    currentStrokeColor = 0;
+    strokeColor = css;
+}
+
+void SVGRenderer::emitDefsIfNeeded()
+{
+    if (!defsEmitted && !defsContent.str().empty()) {
+        svgContent << "  <defs>\n" << defsContent.str() << "  </defs>\n";
+        defsEmitted = true;
+    }
+}
 
 
 std::stack<bool> groupOpenStack;

@@ -31,12 +31,21 @@ public:
     void setFillOpacity(float opacity);
     void setStrokeOpacity(float opacity);
     void drawPath(const std::string& dStr) override;
+    void drawLinearGradient(const string& id, const Point2D& P1, const Point2D& P2, const vector<pair<float, string>>& stops) override;
+    void drawRadialGradient(const string& id, const Point2D& centre, float r, const vector<pair<float, string>>& stops) override;
+    void setFillGradient(const string& gradientId) override;
+    void setStrokeGradient(const string& gradientId) override;
+    void setFillColor(const string& css) override;
+    void setStrokeColor(const string& css) override;
 
 private:
-    std::stringstream svgContent;
-    std::string fillColor;
-    std::string strokeColor;
-    float strokeWidth;
+    stringstream svgContent;
+    ostringstream defsContent;
+    string fillColor;
+    string strokeColor;
+    bool defsEmitted = false;
+    void emitDefsIfNeeded();
+    float strokeWidth = 1.0f;
     float currentFillOpacity = 1.0f;
     float currentStrokeOpacity = 1.0f;
     unsigned long currentfillColor = 0x000000ff;
